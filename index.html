@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PrioritizeTasks — Focus on What Matters</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F7F5F0;
+    --surface: #FFFFFF;
+    --surface2: #EFEDE8;
+    --text: #1A1917;
+    --muted: #7A786F;
+    --border: #D8D5CF;
+    --urgent-imp: #C1401A;
+    --urgent-imp-bg: #FFF0EB;
+    --not-urgent-imp: #0F6E56;
+    --not-urgent-imp-bg: #E8F7F2;
+    --urgent-not: #7A5C00;
+    --urgent-not-bg: #FFF8E0;
+    --not-not: #5A5A5A;
+    --not-not-bg: #F2F2F2;
+    --accent: #C1401A;
+    --accent2: #1D9E75;
+    --shadow: 0 2px 12px rgba(0,0,0,0.07);
+    --radius: 12px;
+  }
+
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; -webkit-text-size-adjust: 100%; }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--text); color: #fff;
+    padding: 0 1rem;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 56px; position: sticky; top: 0; z-index: 100;
+  }
+  .logo {
+    font-family: 'Syne', sans-serif; font-size: 1.05rem; font-weight: 800;
+    letter-spacing: -0.5px; display: flex; align-items: center; gap: 7px;
+  }
+  .logo-dot { width: 7px; height: 7px; background: #E85D2A; border-radius: 50%; display: inline-block; flex-shrink:0; }
+  .logo-suffix { display: none; }
+  .header-actions { display: flex; gap: 6px; align-items: center; }
+  .btn-ghost {
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+    color: #fff; border-radius: 8px; padding: 6px 11px; font-size: 0.75rem;
+    font-family: 'DM Sans', sans-serif; cursor: pointer; transition: background 0.15s;
+    min-height: 36px;
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,0.2); }
+  .badge-count {
+    background: #E85D2A; color: #fff; border-radius: 20px;
+    padding: 3px 10px; font-size: 0.72rem; font-weight: 700; font-family: 'Syne', sans-serif;
+    white-space: nowrap;
+  }
+
+  /* ── MAIN ── */
+  .main { max-width: 1100px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+
+  /* ── HERO ── */
+  .hero { text-align: center; padding: 2rem 0 2rem; }
+  .hero-tag {
+    display: inline-block; font-size: 0.68rem; font-weight: 600; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--accent); border: 1px solid rgba(193,64,26,0.25);
+    background: var(--urgent-imp-bg); padding: 4px 12px; border-radius: 20px; margin-bottom: 0.85rem;
+  }
+  .hero h1 {
+    font-family: 'Syne', sans-serif; font-size: clamp(1.75rem, 7vw, 3.2rem); font-weight: 800;
+    line-height: 1.1; letter-spacing: -0.5px; margin-bottom: 0.65rem;
+  }
+  .hero h1 span { color: var(--accent); }
+  .hero p { color: var(--muted); font-size: 0.92rem; max-width: 420px; margin: 0 auto; line-height: 1.6; }
+
+  /* ── ADD TASK ── */
+  .add-task-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.1rem 1rem;
+    box-shadow: var(--shadow); margin-bottom: 1.5rem;
+  }
+  .form-title {
+    font-family: 'Syne', sans-serif; font-size: 0.75rem; font-weight: 700;
+    letter-spacing: 0.5px; color: var(--muted); text-transform: uppercase; margin-bottom: 0.75rem;
+  }
+  /* Mobile-first: stack everything */
+  .form-row { display: flex; flex-direction: column; gap: 8px; }
+  .selects-row { display: ; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .form-group { display: flex; flex-direction: column; gap: 4px; }
+  .form-group label { font-size: 0.7rem; font-weight: 500; color: var(--muted); }
+  .form-group input, .form-group select {
+    border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 12px;
+    font-size: 1rem; /* prevents iOS zoom */ font-family: 'DM Sans', sans-serif; color: var(--text);
+    background: var(--bg); transition: border-color 0.15s; outline: none;
+    min-height: 44px; /* touch target */
+  }
+  .form-group input:focus, .form-group select:focus { border-color: var(--accent); background: #fff; }
+  .form-group select {
+    appearance: none; cursor: pointer; padding-right: 30px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237A786F' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 8px center;
+  }
+  .btn-add {
+    background: var(--text); color: #fff; border: none; border-radius: 8px;
+    padding: 12px 22px; font-size: 0.95rem; font-weight: 700; font-family: 'Syne', sans-serif;
+    cursor: pointer; transition: background 0.15s, transform 0.1s;
+    min-height: 48px; width: 100%; touch-action: manipulation;
+  }
+  .btn-add:active { transform: scale(0.98); background: #333; }
+
+  /* ── TOGGLE BUTTONS ── */
+  .toggle-btn {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 14px; font-size: 0.78rem; font-weight: 600; color: var(--muted);
+    cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s;
+    min-height: 36px; touch-action: manipulation;
+  }
+  .toggle-btn.active { background: var(--text); color: #fff; border-color: var(--text); }
+
+  /* ── VIEW / FILTER BAR ── */
+  .view-filter-bar {
+    display: flex; flex-direction: column; gap: 8px; margin-bottom: 1rem;
+  }
+  .view-filter-row {
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  }
+  .view-label { font-size: 0.72rem; font-weight: 500; color: var(--muted); white-space: nowrap; }
+
+  /* ── STATS BAR ── */
+  .stats-bar {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    gap: 6px; margin-bottom: 1.1rem;
+  }
+  .stat-pill {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 8px 6px; font-size: 0.68rem; font-weight: 500; color: var(--muted);
+    display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center;
+  }
+  .stat-pill strong { font-family:'Syne',sans-serif; font-weight:800; color:var(--text); font-size:1rem; line-height:1; }
+
+  /* ── MATRIX AXIS & SIDE LABEL ── */
+  .matrix-axis { display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; margin-bottom:0.3rem; }
+  .axis-label { text-align:center; font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--muted); padding:3px; }
+  .matrix-wrapper { display:flex; gap:6px; align-items:stretch; }
+  .matrix-side-label { writing-mode:vertical-rl; text-orientation:mixed; transform:rotate(180deg); font-size:0.6rem; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--muted); align-self:center; text-align:center; }
+
+  /* ── MATRIX ── */
+  .matrix-container { display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; flex: 1; }
+  
+  .quadrant {
+    background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border);
+    min-height: 180px; display: flex; flex-direction: column; overflow: hidden;
+  }
+  .quadrant-header {
+    padding: 10px 12px 8px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+  }
+  .quadrant-label { display: flex; align-items: center; gap: 6px; }
+  .q-icon { width: 26px; height: 26px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+  .quadrant-name { font-family: 'Syne', sans-serif; font-size: 0.8rem; font-weight: 700; }
+  .quadrant-sub { font-size: 0.62rem; color: var(--muted); margin-top: 1px; }
+  .q-count { font-size: 0.65rem; font-weight: 700; font-family: 'Syne', sans-serif; padding: 2px 8px; border-radius: 20px; }
+  .q1 .q-icon { background: var(--urgent-imp-bg); color: var(--urgent-imp); }
+  .q1 .quadrant-name { color: var(--urgent-imp); }
+  .q1 .q-count { background: var(--urgent-imp-bg); color: var(--urgent-imp); }
+  .q2 .q-icon { background: var(--not-urgent-imp-bg); color: var(--not-urgent-imp); }
+  .q2 .quadrant-name { color: var(--not-urgent-imp); }
+  .q2 .q-count { background: var(--not-urgent-imp-bg); color: var(--not-urgent-imp); }
+  .q3 .q-icon { background: var(--urgent-not-bg); color: var(--urgent-not); }
+  .q3 .quadrant-name { color: var(--urgent-not); }
+  .q3 .q-count { background: var(--urgent-not-bg); color: var(--urgent-not); }
+  .q4 .q-icon { background: var(--not-not-bg); color: var(--not-not); }
+  .q4 .quadrant-name { color: var(--not-not); }
+  .q4 .q-count { background: var(--not-not-bg); color: var(--not-not); }
+
+  .task-list { padding: 8px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; }
+  .task-item {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 9px 10px; border-radius: 7px;
+    background: var(--bg); border: 1px solid transparent;
+    transition: border-color 0.15s, background 0.15s;
+    animation: slideIn 0.2s ease;
+  }
+  @keyframes slideIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
+  .task-check {
+    width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border);
+    flex-shrink: 0; cursor: pointer; margin-top: 1px; transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center; background: #fff;
+    min-width: 20px; touch-action: manipulation;
+  }
+  .task-item.done .task-check { background: var(--accent2); border-color: var(--accent2); }
+  .task-item.done .task-check::after {
+    content: ''; width: 5px; height: 8px; border: 2px solid #fff;
+    border-left: none; border-top: none; transform: rotate(45deg) translate(-1px,-1px); display: block;
+  }
+  .task-item.done .task-text { text-decoration: line-through; opacity: 0.5; }
+  .task-body { flex: 1; min-width: 0; }
+  .task-text { font-size: 0.82rem; line-height: 1.4; color: var(--text); word-break: break-word; }
+  .task-meta { display: flex; gap: 4px; margin-top: 3px; flex-wrap: wrap; }
+  .tag { font-size: 0.6rem; font-weight: 600; padding: 2px 6px; border-radius: 20px; letter-spacing: 0.2px; }
+  .tag-effort-low { background: #E8F7F2; color: var(--not-urgent-imp); }
+  .tag-effort-medium { background: var(--urgent-not-bg); color: var(--urgent-not); }
+  .tag-effort-high { background: #FFF0EB; color: var(--urgent-imp); }
+  /* Always visible delete on mobile (no hover) */
+  .task-delete {
+    background: none; border: none; color: var(--muted); cursor: pointer;
+    font-size: 13px; padding: 4px; flex-shrink: 0; opacity: 0.5;
+    min-width: 24px; min-height: 24px; touch-action: manipulation;
+  }
+  .task-delete:active { color: var(--accent); opacity: 1; }
+  @media (hover: hover) {
+    .task-delete { opacity: 0; }
+    .task-item:hover .task-delete { opacity: 1; }
+    .task-item:hover { border-color: var(--border); background: #fff; }
+  }
+
+  .empty-state { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; padding:1.5rem 0.5rem; color:var(--muted); font-size:0.75rem; text-align:center; flex:1; }
+  .empty-icon { font-size:20px; opacity:0.4; }
+
+  /* ── FOCUS BANNER ── */
+  .focus-banner {
+    background: var(--urgent-imp-bg); border: 1px solid rgba(193,64,26,0.2);
+    border-radius: var(--radius); padding: 0.85rem 1rem; margin-bottom: 1rem;
+    display: none; align-items: flex-start; gap: 10px; flex-wrap: wrap;
+  }
+  .focus-banner.show { display: flex; }
+  .focus-task { font-weight: 600; font-size: 0.88rem; color: var(--urgent-imp); flex: 1; min-width: 160px; }
+  .focus-label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); }
+  .btn-done-focus {
+    background: var(--accent); color: #fff; border: none; border-radius: 8px;
+    padding: 8px 14px; font-size: 0.8rem; font-weight: 600;
+    font-family: 'DM Sans', sans-serif; cursor: pointer; white-space: nowrap;
+    min-height: 36px; touch-action: manipulation;
+  }
+
+  /* ── LIST VIEW ── */
+  .list-table { background:var(--surface); border-radius:var(--radius); border:1px solid var(--border); overflow:hidden; box-shadow:var(--shadow); }
+  .list-header { display:grid; grid-template-columns:1fr 100px 44px; padding:8px 12px; background:var(--surface2); border-bottom:1px solid var(--border); }
+  .list-header span { font-size:0.65rem; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.8px; }
+  .list-row { display:grid; grid-template-columns:1fr 100px 44px; align-items:center; padding:11px 12px; border-bottom:1px solid var(--border); font-size:0.84rem; animation:slideIn 0.2s ease; }
+  .list-row:last-child { border-bottom:none; }
+  .list-row.done .task-name { text-decoration:line-through; opacity:0.5; }
+  .quadrant-badge { font-size:0.65rem; font-weight:700; padding:3px 8px; border-radius:20px; display:inline-block; }
+
+  /* ── CONTENT CARDS SECTION ── */
+  .section-divider { border:none; border-top:1px solid var(--border); margin:3rem 0 0; }
+  .cards-section { padding:2.5rem 1rem 2rem; max-width:1100px; margin:0 auto; }
+  .section-eyebrow { font-size:0.68rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--accent); margin-bottom:0.4rem; }
+  .section-heading { font-family:'Syne',sans-serif; font-size:clamp(1.3rem,5vw,2.3rem); font-weight:800; letter-spacing:-0.4px; line-height:1.15; margin-bottom:0.55rem; }
+  .section-sub { color:var(--muted); font-size:0.88rem; line-height:1.6; margin-bottom:2rem; }
+
+  /* Steps — 2 col on mobile */
+  .steps-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; margin-bottom:2.5rem; }
+  .step-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:1.1rem; position:relative; overflow:hidden; }
+  .step-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+  .step-card:nth-child(1)::before { background:var(--accent); }
+  .step-card:nth-child(2)::before { background:var(--not-urgent-imp); }
+  .step-card:nth-child(3)::before { background:#E89A2A; }
+  .step-card:nth-child(4)::before { background:var(--muted); }
+  .step-num { font-family:'Syne',sans-serif; font-size:2rem; font-weight:800; line-height:1; margin-bottom:0.6rem; letter-spacing:-2px; }
+  .step-title { font-family:'Syne',sans-serif; font-size:0.85rem; font-weight:700; margin-bottom:0.35rem; }
+  .step-desc { font-size:0.78rem; color:var(--muted); line-height:1.5; }
+
+  /* Features — 1 col on mobile */
+  .features-grid { display:grid; grid-template-columns:1fr; gap:0.75rem; margin-bottom:2.5rem; }
+  .feature-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:1.1rem; display:flex; gap:1rem; align-items:flex-start; }
+  .feature-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+  .feature-body { flex:1; }
+  .feature-title { font-family:'Syne',sans-serif; font-size:0.9rem; font-weight:700; margin-bottom:0.3rem; }
+  .feature-desc { font-size:0.8rem; color:var(--muted); line-height:1.55; }
+
+  /* Testimonials — 1 col on mobile */
+  .testimonials-grid { display:grid; grid-template-columns:1fr; gap:0.75rem; margin-bottom:2.5rem; }
+  .testimonial-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:1.1rem; display:flex; flex-direction:column; gap:0.75rem; }
+  .stars { color:#E89A2A; font-size:12px; letter-spacing:2px; }
+  .testimonial-text { font-size:0.84rem; line-height:1.6; color:var(--text); font-style:italic; }
+  .testimonial-author { display:flex; align-items:center; gap:10px; border-top:1px solid var(--border); padding-top:0.75rem; }
+  .avatar { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-size:0.72rem; font-weight:700; flex-shrink:0; }
+  .author-name { font-weight:600; font-size:0.8rem; }
+  .author-role { font-size:0.7rem; color:var(--muted); margin-top:1px; }
+
+  /* ── TEMPLATES ── */
+  .tpl-controls {
+    display: flex; flex-direction: column; gap: 0.75rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1rem;
+    margin-bottom: 1.25rem; box-shadow: var(--shadow);
+  }
+  .tpl-ctrl-group { display:flex; flex-direction:column; gap:5px; }
+  .tpl-ctrl-label { font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--muted); }
+  .tpl-mode-toggle { display:flex; border:1px solid var(--border); border-radius:8px; overflow:hidden; width:100%; }
+  .tpl-mode-btn {
+    flex:1; background:none; border:none; padding:9px 12px; font-size:0.82rem;
+    font-weight:600; font-family:'DM Sans',sans-serif; color:var(--muted);
+    cursor:pointer; transition:all 0.15s; min-height:40px; touch-action:manipulation;
+  }
+  .tpl-mode-btn.active { background:var(--text); color:#fff; }
+  .tpl-size-select {
+    border:1px solid var(--border); border-radius:8px; padding:9px 30px 9px 12px;
+    font-size:0.88rem; font-family:'DM Sans',sans-serif; color:var(--text);
+    background:var(--bg); outline:none; cursor:pointer; width:100%; min-height:40px;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237A786F' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 8px center; appearance:none;
+  }
+  .tpl-size-select:focus { border-color:var(--accent); }
+
+  /* 2-col templates on mobile, 4-col on desktop */
+  .templates-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; margin-bottom:1rem; }
+  .template-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+  .template-preview { width:100%; overflow:hidden; background:#eee; }
+  .template-preview canvas { width:100%; height:auto; display:block; }
+  .template-info { padding:0.75rem; border-top:1px solid var(--border); }
+  .tpl-card-top { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:0.6rem; }
+  .template-name { font-family:'Syne',sans-serif; font-size:0.82rem; font-weight:700; margin-bottom:2px; }
+  .template-desc { font-size:0.68rem; color:var(--muted); }
+  .tpl-swatch { width:24px; height:24px; border-radius:6px; flex-shrink:0; }
+  .tpl-btn-row { display:flex; gap:5px; }
+  .template-dl-btn {
+    flex:1; background:var(--text); color:#fff; border:none; border-radius:7px;
+    padding:8px 6px; font-size:0.7rem; font-weight:700; font-family:'Syne',sans-serif;
+    cursor:pointer; transition:background 0.15s; text-align:center;
+    min-height:36px; touch-action:manipulation;
+  }
+  .template-dl-btn:active { background:#333; }
+  .tpl-btn-blank { background:var(--surface2); color:var(--text); border:1px solid var(--border); }
+  .tpl-btn-blank:active { background:var(--border); }
+  .tpl-size-info { font-size:0.72rem; color:var(--muted); text-align:center; margin-bottom:2.5rem; padding:0.5rem; }
+
+  /* ── CTA ── */
+  .cta-card { background:var(--text); border-radius:14px; padding:2rem 1.25rem; text-align:center; color:#fff; margin-bottom:2.5rem; position:relative; overflow:hidden; }
+  .cta-card::before { content:''; position:absolute; top:-40px; right:-40px; width:180px; height:180px; background:rgba(232,93,42,0.12); border-radius:50%; }
+  .cta-card::after { content:''; position:absolute; bottom:-60px; left:-30px; width:160px; height:160px; background:rgba(29,158,117,0.1); border-radius:50%; }
+  .cta-card h2 { font-family:'Syne',sans-serif; font-size:clamp(1.2rem,5vw,2rem); font-weight:800; letter-spacing:-0.3px; margin-bottom:0.5rem; position:relative; z-index:1; }
+  .cta-card p { color:rgba(255,255,255,0.6); font-size:0.88rem; margin-bottom:1.5rem; position:relative; z-index:1; }
+  .cta-btn { background:#E85D2A; color:#fff; border:none; border-radius:10px; padding:13px 28px; font-size:0.9rem; font-weight:700; font-family:'Syne',sans-serif; cursor:pointer; position:relative; z-index:1; min-height:48px; touch-action:manipulation; }
+  .cta-btn:active { opacity:0.9; }
+
+ @media (max-width:400px) {
+      .matrix-container { display: grid; grid-template-columns: 1fr; gap: 0.65rem; flex: 1; }
+       .templates-grid { display:grid; grid-template-columns:1fr; gap:0.75rem; margin-bottom:1rem;flex: 1; }
+  }
+  
+  /* ── FOOTER ── */
+  footer { background:var(--text); color:rgba(255,255,255,0.7); padding:2.5rem 1rem 1.5rem; }
+  .footer-inner { max-width:1100px; margin:0 auto; }
+  .footer-top { display:grid; grid-template-columns:1fr; gap:2rem; padding-bottom:2rem; border-bottom:1px solid rgba(255,255,255,0.1); margin-bottom:1.5rem; }
+  .footer-brand .logo { color:#fff; font-size:1rem; margin-bottom:0.75rem; }
+  .footer-tagline { font-size:0.8rem; line-height:1.65; color:rgba(255,255,255,0.42); margin-bottom:1rem; }
+  .footer-badges { display:flex; gap:6px; flex-wrap:wrap; }
+  .footer-badge { background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.1); border-radius:6px; padding:4px 9px; font-size:0.68rem; font-weight:500; color:rgba(255,255,255,0.42); }
+  .footer-links-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+  .footer-col-title { font-family:'Syne',sans-serif; font-size:0.68rem; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:rgba(255,255,255,0.32); margin-bottom:0.75rem; }
+  .footer-links { list-style:none; display:flex; flex-direction:column; gap:0.55rem; }
+  .footer-links a { text-decoration:none; color:rgba(255,255,255,0.52); font-size:0.82rem; cursor:pointer; }
+  .footer-bottom { display:flex; flex-direction:column; gap:0.75rem; }
+  .footer-copy { font-size:0.75rem; color:rgba(255,255,255,0.28); }
+  .footer-legal { display:flex; gap:1rem; flex-wrap:wrap; }
+  .footer-legal a { font-size:0.75rem; color:rgba(255,255,255,0.28); text-decoration:none; cursor:pointer; }
+  .footer-heart { color:#E85D2A; }
+
+  /* ── TABLET (≥640px) ── */
+  @media (min-width:640px) {
+    header { padding:0 1.5rem; height:60px; }
+    .logo { font-size:1.15rem; }
+    .logo-suffix { display:inline; }
+    .main { padding:2rem 1.5rem 4rem; }
+    .hero { padding:2.5rem 0 2.5rem; }
+    .add-task-card { padding:1.4rem 1.5rem; }
+    .form-row { display:grid; grid-template-columns:1fr; gap:10px; }
+    .selects-row { grid-template-columns:1fr 1fr 1fr; }
+    .stats-bar { grid-template-columns:repeat(5,1fr); gap:8px; }
+    .stat-pill { padding:8px 10px; }
+    .features-grid { grid-template-columns:1fr 1fr; }
+    .testimonials-grid { grid-template-columns:1fr 1fr; }
+    .footer-top { grid-template-columns:1fr 1fr; gap:2rem; }
+    .footer-links-grid { grid-template-columns:1fr 1fr; }
+    .footer-bottom { flex-direction:row; justify-content:space-between; align-items:center; }
+    .tpl-controls { flex-direction:row; align-items:flex-end; flex-wrap:wrap; padding:1.1rem 1.25rem; }
+    .tpl-mode-toggle { width:auto; }
+    .tpl-size-select { width:auto; }
+    .templates-grid { grid-template-columns:repeat(2,1fr); gap:1rem; }
+    .cards-section { padding:3.5rem 1.5rem 2.5rem; }
+  }
+
+  /* ── DESKTOP (≥900px) ── */
+  @media (min-width:900px) {
+    header { padding:0 2rem; }
+    .logo { font-size:1.25rem; }
+    .main { padding:2rem 1.5rem 4rem; }
+    .form-row { grid-template-columns:1fr auto auto auto; align-items:end; }
+    .selects-row { display:contents; }
+    .form-group { flex-direction:column; }
+    .btn-add { width:auto; }
+    .view-filter-bar { flex-direction:row; justify-content:space-between; align-items:center; margin-bottom:1.2rem; }
+    .stats-bar { display:flex; gap:1rem; }
+    .stat-pill { flex-direction:row; padding:6px 16px; font-size:0.78rem; border-radius:30px; }
+    .stat-pill strong { font-size:0.9rem; }
+    .matrix-container { gap:1rem; }
+    .quadrant { min-height:260px; }
+    .quadrant-header { padding:14px 16px 10px; }
+    .q-icon { width:28px; height:28px; font-size:14px; }
+    .quadrant-name { font-size:0.85rem; }
+    .quadrant-sub { font-size:0.7rem; }
+    .task-list { padding:10px 12px; gap:6px; }
+    .task-text { font-size:0.85rem; }
+    .steps-grid { grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:4rem; }
+    .features-grid { grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:4rem; }
+    .feature-card { flex-direction:column; }
+    .feature-icon { margin-bottom:0.75rem; }
+    .testimonials-grid { grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:4rem; }
+    .templates-grid { grid-template-columns:repeat(4,1fr); gap:1rem; }
+    .list-header { grid-template-columns:1fr 120px 100px 80px 44px; }
+    .list-row { grid-template-columns:1fr 120px 100px 80px 44px; }
+    .footer-top { grid-template-columns:2fr 1fr 1fr 1fr; gap:2.5rem; }
+    .footer-links-grid { display:contents; }
+    .cards-section { padding:4rem 1.5rem 3rem; }
+    .cta-card { padding:3rem; }
+    footer { padding:3.5rem 2rem 2rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <span class="logo-dot"></span>
+    PrioritizeTasks
+    <span class="logo-suffix" style="font-size:0.6rem;font-weight:400;opacity:0.4;letter-spacing:1px;text-transform:uppercase;margin-left:2px;">.com</span>
+  </div>
+  <div class="header-actions">
+    <span class="badge-count" id="total-count">0 tasks</span>
+    <button class="btn-ghost" onclick="clearDone()">Clear done</button>
+    <button class="btn-ghost" onclick="exportTasks()">Export</button>
+  </div>
+</header>
+
+<!-- APP -->
+<div class="main">
+  <div class="hero">
+    <div class="hero-tag">Eisenhower Matrix</div>
+    <h1>Work smarter,<br>not <span>harder</span></h1>
+    <p>Add your tasks and instantly see where to focus. The matrix shows you what to do, schedule, delegate, or drop.</p>
+  </div>
+
+  <div class="add-task-card">
+    <div class="form-title">+ New Task</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Task description</label>
+        <input type="text" id="task-input" placeholder="What needs to be done?" maxlength="120" autocomplete="off" />
+      </div>
+      <div class="selects-row">
+        <div class="form-group">
+          <label>Urgency</label>
+          <select id="urgency-select">
+            <option value="urgent">🔴 Urgent</option>
+            <option value="not-urgent">🟢 Not urgent</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Importance</label>
+          <select id="importance-select">
+            <option value="important">⭐ Important</option>
+            <option value="not-important">◎ Not important</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Effort</label>
+          <select id="effort-select">
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn-add" onclick="addTask()">Add task →</button>
+    </div>
+  </div>
+
+  <div class="focus-banner" id="focus-banner">
+    <div>
+      <div class="focus-label">🔥 Focus on this now</div>
+      <div class="focus-task" id="focus-task-text">—</div>
+    </div>
+    <button class="btn-done-focus" onclick="markFocusDone()">Mark done</button>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-pill"><strong id="s-total">0</strong><span>total</span></div>
+    <div class="stat-pill"><strong id="s-q1" style="color:var(--urgent-imp)">0</strong><span>do first</span></div>
+    <div class="stat-pill"><strong id="s-q2" style="color:var(--not-urgent-imp)">0</strong><span>schedule</span></div>
+    <div class="stat-pill"><strong id="s-q3" style="color:var(--urgent-not)">0</strong><span>delegate</span></div>
+    <div class="stat-pill"><strong id="s-done">0</strong><span>done</span></div>
+  </div>
+
+  <div class="view-filter-bar">
+    <div class="view-filter-row">
+      <span class="view-label">View:</span>
+      <button class="toggle-btn active" id="btn-matrix" onclick="switchView('matrix')">Matrix</button>
+      <button class="toggle-btn" id="btn-list" onclick="switchView('list')">List</button>
+    </div>
+    <div class="view-filter-row">
+      <span class="view-label">Filter:</span>
+      <button class="toggle-btn active" id="filter-all" onclick="setFilter('all')">All</button>
+      <button class="toggle-btn" id="filter-pending" onclick="setFilter('pending')">Pending</button>
+      <button class="toggle-btn" id="filter-done" onclick="setFilter('done')">Done</button>
+    </div>
+  </div>
+
+  <div id="matrix-view">
+    <div class="matrix-axis">
+      <div class="axis-label" style="color:var(--urgent-imp)">Urgent</div>
+      <div class="axis-label" style="color:var(--not-urgent-imp)">Not Urgent</div>
+    </div>
+    <div class="matrix-wrapper">
+      <div class="matrix-side-label">Important ↑ · Not important ↓</div>
+      <div class="matrix-container" style="flex:1;">
+        <div class="quadrant q1">
+          <div class="quadrant-header">
+            <div class="quadrant-label"><div class="q-icon">🔥</div><div><div class="quadrant-name">Do First</div><div class="quadrant-sub">Urgent + Important</div></div></div>
+            <span class="q-count" id="q1-count">0</span>
+          </div>
+          <div class="task-list" id="q1-list"><div class="empty-state"><div class="empty-icon">✓</div><span>No tasks here — great!</span></div></div>
+        </div>
+        <div class="quadrant q2">
+          <div class="quadrant-header">
+            <div class="quadrant-label"><div class="q-icon">📅</div><div><div class="quadrant-name">Schedule</div><div class="quadrant-sub">Not urgent + Important</div></div></div>
+            <span class="q-count" id="q2-count">0</span>
+          </div>
+          <div class="task-list" id="q2-list"><div class="empty-state"><div class="empty-icon">📅</div><span>Plan your goals here</span></div></div>
+        </div>
+        <div class="quadrant q3">
+          <div class="quadrant-header">
+            <div class="quadrant-label"><div class="q-icon">🔁</div><div><div class="quadrant-name">Delegate</div><div class="quadrant-sub">Urgent + Not important</div></div></div>
+            <span class="q-count" id="q3-count">0</span>
+          </div>
+          <div class="task-list" id="q3-list"><div class="empty-state"><div class="empty-icon">🔁</div><span>Tasks to hand off</span></div></div>
+        </div>
+        <div class="quadrant q4">
+          <div class="quadrant-header">
+            <div class="quadrant-label"><div class="q-icon">🗑️</div><div><div class="quadrant-name">Eliminate</div><div class="quadrant-sub">Not urgent + Not important</div></div></div>
+            <span class="q-count" id="q4-count">0</span>
+          </div>
+          <div class="task-list" id="q4-list"><div class="empty-state"><div class="empty-icon">🗑️</div><span>Drop or ignore these</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="list-view" style="display:none;">
+    <div class="list-table">
+      <div class="list-header">
+        <span>Task</span><span>Quadrant</span><span>Effort</span><span>Status</span><span></span>
+      </div>
+      <div id="list-body"></div>
+    </div>
+  </div>
+</div>
+
+<hr class="section-divider">
+
+<!-- CONTENT CARDS -->
+<section class="cards-section">
+
+  <!-- HOW IT WORKS -->
+  <div class="section-eyebrow">How it works</div>
+  <h2 class="section-heading">Simple. Focused. Effective.</h2>
+  <p class="section-sub">The Eisenhower Matrix was used by US President Dwight D. Eisenhower to manage the most demanding job in the world. Now it's yours — in seconds.</p>
+
+  <div class="steps-grid">
+    <div class="step-card">
+      <div class="step-num" style="color:var(--urgent-imp)">01</div>
+      <div class="step-title">Add your tasks</div>
+      <p class="step-desc">Type anything on your mind — work tasks, errands, ideas. No complex setup or formatting required.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-num" style="color:var(--not-urgent-imp)">02</div>
+      <div class="step-title">Rate urgency & importance</div>
+      <p class="step-desc">Two simple dropdowns automatically place each task into the correct quadrant of the matrix.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-num" style="color:#E89A2A">03</div>
+      <div class="step-title">See what matters now</div>
+      <p class="step-desc">The matrix instantly shows you what to do today, what to schedule, what to delegate, and what to cut entirely.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-num" style="color:var(--muted)">04</div>
+      <div class="step-title">Check off & move on</div>
+      <p class="step-desc">Mark tasks done as you go. Export a CSV report anytime for weekly reviews or sharing with your team.</p>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <div class="section-eyebrow">Features</div>
+  <h2 class="section-heading">Everything you need, nothing you don't.</h2>
+  <p class="section-sub">Built for people who actually want to get things done — not spend hours managing a productivity system.</p>
+
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon" style="background:var(--urgent-imp-bg)">🔥</div>
+      <div class="feature-body">
+        <div class="feature-title">Focus mode</div>
+        <p class="feature-desc">A persistent banner always surfaces your single most critical task so you never lose sight of what's truly urgent and important right now.</p>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:var(--not-urgent-imp-bg)">📊</div>
+      <div class="feature-body">
+        <div class="feature-title">Live task stats</div>
+        <p class="feature-desc">See your full task breakdown at a glance — pending vs done, counts per quadrant. Real accountability made visual.</p>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:var(--urgent-not-bg)">🔄</div>
+      <div class="feature-body">
+        <div class="feature-title">Matrix + List views</div>
+        <p class="feature-desc">Toggle between the 2×2 matrix for the big picture or a clean table view when you need to scan and sort everything quickly.</p>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:#F0EAF8">⚡</div>
+      <div class="feature-body">
+        <div class="feature-title">Effort tagging</div>
+        <p class="feature-desc">Tag each task low, medium, or high effort so you can batch similar tasks together or pick quick wins when energy is low.</p>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:var(--not-urgent-imp-bg)">💾</div>
+      <div class="feature-body">
+        <div class="feature-title">Auto-save</div>
+        <p class="feature-desc">Everything is saved to your browser automatically. Close the tab, reopen tomorrow — your tasks are exactly where you left them.</p>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background:var(--surface2)">📥</div>
+      <div class="feature-body">
+        <div class="feature-title">CSV export</div>
+        <p class="feature-desc">Download your full task list as a spreadsheet anytime. Perfect for weekly reviews, status reports, or sharing with your team.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- TESTIMONIALS -->
+  <div class="section-eyebrow">What people say</div>
+  <h2 class="section-heading">Used by people who mean business.</h2>
+  <p class="section-sub">From solo founders to team leads — PrioritizeTasks helps people cut through the noise every single day.</p>
+
+  <div class="testimonials-grid">
+    <div class="testimonial-card">
+      <div class="stars">★★★★★</div>
+      <p class="testimonial-text">"I've tried Notion, Todoist, Asana. Nothing stuck. This took me 30 seconds to understand and I've used it every morning for three weeks now."</p>
+      <div class="testimonial-author">
+        <div class="avatar" style="background:var(--urgent-imp-bg);color:var(--urgent-imp)">RK</div>
+        <div>
+          <div class="author-name">Ravi Kumar</div>
+          <div class="author-role">Product Manager, Bangalore</div>
+        </div>
+      </div>
+    </div>
+    <div class="testimonial-card">
+      <div class="stars">★★★★★</div>
+      <p class="testimonial-text">"The Focus Mode banner is genuinely brilliant. It stops me from context-switching by always reminding me of the one thing I should be doing right now."</p>
+      <div class="testimonial-author">
+        <div class="avatar" style="background:var(--not-urgent-imp-bg);color:var(--not-urgent-imp)">SM</div>
+        <div>
+          <div class="author-name">Sara Mensah</div>
+          <div class="author-role">Freelance Designer, Accra</div>
+        </div>
+      </div>
+    </div>
+    <div class="testimonial-card">
+      <div class="stars">★★★★☆</div>
+      <p class="testimonial-text">"Finally a productivity tool that doesn't require a tutorial. I shared it with my whole engineering team — we use the CSV export for our Monday standups."</p>
+      <div class="testimonial-author">
+        <div class="avatar" style="background:var(--urgent-not-bg);color:var(--urgent-not)">JL</div>
+        <div>
+          <div class="author-name">James Liu</div>
+          <div class="author-role">Engineering Lead, Singapore</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEMPLATE DOWNLOAD -->
+  <div class="section-eyebrow">Download templates</div>
+  <h2 class="section-heading">Take your tasks anywhere.</h2>
+  <p class="section-sub">Export your tasks as a stunning wallpaper or printable card. Templates live-update with your tasks — or download a blank to fill in by hand.</p>
+
+  <!-- Controls bar -->
+  <div class="tpl-controls">
+    <div class="tpl-ctrl-group">
+      <span class="tpl-ctrl-label">Mode</span>
+      <div class="tpl-mode-toggle">
+        <button class="tpl-mode-btn active" id="btn-mode-tasks" onclick="setTemplateMode('tasks')">My tasks</button>
+        <button class="tpl-mode-btn" id="btn-mode-blank" onclick="setTemplateMode('blank')">Blank template</button>
+      </div>
+    </div>
+    <div class="tpl-ctrl-group">
+      <span class="tpl-ctrl-label">Wallpaper size</span>
+      <select class="tpl-size-select" id="tpl-size" onchange="onSizeChange()">
+        <option value="1920x1080">Desktop HD (1920×1080)</option>
+        <option value="2560x1440">Desktop 2K (2560×1440)</option>
+        <option value="1080x1920">Mobile (1080×1920)</option>
+        <option value="1080x1080">Square (1080×1080)</option>
+        <option value="800x520">Card / Print (800×520)</option>
+      </select>
+    </div>
+    <div class="tpl-ctrl-group" id="filter-ctrl">
+      <span class="tpl-ctrl-label">Show tasks from</span>
+      <select class="tpl-size-select" id="tpl-filter" onchange="renderAllTemplates()">
+        <option value="all">All quadrants</option>
+        <option value="q1">🔥 Do First only</option>
+        <option value="q2">📅 Schedule only</option>
+        <option value="q3">🔁 Delegate only</option>
+        <option value="q4">🗑️ Eliminate only</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="templates-grid">
+    <div class="template-card">
+      <div class="template-preview">
+        <canvas id="canvas-checklist"></canvas>
+      </div>
+      <div class="template-info">
+        <div class="tpl-card-top">
+          <div>
+            <div class="template-name">Checklist</div>
+            <div class="template-desc">Bullet list · sage green</div>
+          </div>
+          <div class="tpl-swatch" style="background:#3A9B6F"></div>
+        </div>
+        <div class="tpl-btn-row">
+          <button class="template-dl-btn" onclick="downloadTemplate('checklist')">↓ With tasks</button>
+          <button class="template-dl-btn tpl-btn-blank" onclick="downloadBlankTemplate('checklist')">↓ Blank</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="template-card">
+      <div class="template-preview">
+        <canvas id="canvas-notepad"></canvas>
+      </div>
+      <div class="template-info">
+        <div class="tpl-card-top">
+          <div>
+            <div class="template-name">Notepad</div>
+            <div class="template-desc">Paper notes · warm coral</div>
+          </div>
+          <div class="tpl-swatch" style="background:#C8573A"></div>
+        </div>
+        <div class="tpl-btn-row">
+          <button class="template-dl-btn" onclick="downloadTemplate('notepad')">↓ With tasks</button>
+          <button class="template-dl-btn tpl-btn-blank" onclick="downloadBlankTemplate('notepad')">↓ Blank</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="template-card">
+      <div class="template-preview">
+        <canvas id="canvas-todo"></canvas>
+      </div>
+      <div class="template-info">
+        <div class="tpl-card-top">
+          <div>
+            <div class="template-name">To-Do Tracker</div>
+            <div class="template-desc">Checkbox rows · cobalt blue</div>
+          </div>
+          <div class="tpl-swatch" style="background:#3558C0"></div>
+        </div>
+        <div class="tpl-btn-row">
+          <button class="template-dl-btn" onclick="downloadTemplate('todo')">↓ With tasks</button>
+          <button class="template-dl-btn tpl-btn-blank" onclick="downloadBlankTemplate('todo')">↓ Blank</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="template-card">
+      <div class="template-preview">
+        <canvas id="canvas-priority"></canvas>
+      </div>
+      <div class="template-info">
+        <div class="tpl-card-top">
+          <div>
+            <div class="template-name">Priority Board</div>
+            <div class="template-desc">Ranked list · rose red</div>
+          </div>
+          <div class="tpl-swatch" style="background:#E05A6B"></div>
+        </div>
+        <div class="tpl-btn-row">
+          <button class="template-dl-btn" onclick="downloadTemplate('priority')">↓ With tasks</button>
+          <button class="template-dl-btn tpl-btn-blank" onclick="downloadBlankTemplate('priority')">↓ Blank</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Size info badge -->
+  <div class="tpl-size-info" id="tpl-size-info">
+    Previews are scaled down. Downloaded images are full resolution.
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-card">
+    <h2>Ready to clear your head?</h2>
+    <p>Your tasks are waiting above. Scroll up and start prioritizing — it takes under 60 seconds.</p>
+    <button class="cta-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})">Start prioritizing ↑</button>
+  </div>
+
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="logo">
+          <span class="logo-dot"></span>
+          PrioritizeTasks
+          <span class="footer-logo-suffix" style="font-size:0.55rem;font-weight:400;opacity:0.3;letter-spacing:1px;text-transform:uppercase;">.com</span>
+        </div>
+        <p class="footer-tagline">The simplest way to prioritize what matters. Built on the Eisenhower Matrix — battle-tested by the most productive people in history.</p>
+        <div class="footer-badges">
+          <span class="footer-badge">Free to use</span>
+          <span class="footer-badge">No sign-up</span>
+          <span class="footer-badge">No ads</span>
+          <span class="footer-badge">Open source</span>
+        </div>
+      </div>
+
+      <div class="footer-links-grid">
+        <div>
+          <div class="footer-col-title">Product</div>
+          <ul class="footer-links">
+            <li><a onclick="window.scrollTo({top:0,behavior:'smooth'})">Task matrix</a></li>
+            <li><a onclick="switchView('list');window.scrollTo({top:0,behavior:'smooth'})">List view</a></li>
+            <li><a onclick="exportTasks()">Export CSV</a></li>
+            <li><a>Keyboard shortcuts</a></li>
+            <li><a>What's new</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="footer-col-title">Learn</div>
+          <ul class="footer-links">
+            <li><a>Eisenhower matrix guide</a></li>
+            <li><a>Time management tips</a></li>
+            <li><a>Deep work framework</a></li>
+            <li><a>Weekly review template</a></li>
+            <li><a>Productivity blog</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="footer-col-title">Company</div>
+          <ul class="footer-links">
+            <li><a>About us</a></li>
+            <li><a>Roadmap</a></li>
+            <li><a>Give feedback</a></li>
+            <li><a>Twitter / X</a></li>
+            <li><a>Contact us</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div class="footer-copy">© 2026 PrioritizeTasks. All rights reserved. Made with <span class="footer-heart">♥</span> for focused humans.</div>
+      <div class="footer-legal">
+        <a>Privacy policy</a>
+        <a>Terms of use</a>
+        <a>Cookie settings</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="script.js">
+</script>
+</body>
+</html>
